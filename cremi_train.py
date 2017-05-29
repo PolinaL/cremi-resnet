@@ -182,9 +182,9 @@ class Train(object):
 
 
 
-            #if step == FLAGS.decay_step0 or step == FLAGS.decay_step1:
-            #    FLAGS.init_lr = 0.1 * FLAGS.init_lr
-            #    print ('Learning rate decayed to ', FLAGS.init_lr)
+            if step == FLAGS.decay_step0 or step == FLAGS.decay_step1:
+                FLAGS.init_lr = FLAGS.lr_decay_factor * FLAGS.init_lr
+                print ('Learning rate decayed to ', FLAGS.init_lr)
 
             # Save checkpoints every 10000 steps
             if step % 10000 == 0 or (step + 1) == FLAGS.train_steps:
@@ -341,12 +341,11 @@ class Train(object):
             tf.summary.scalar('train_top1_error_avg', ema.average(top1_error))
             tf.summary.scalar('train_loss_avg', ema.average(total_loss))
 
-        #opt = tf.train.MomentumOptimizer(learning_rate=self.lr_placeholder, momentum=0.9)
+        opt = tf.train.MomentumOptimizer(learning_rate=self.lr_placeholder, momentum=0.9)
 
-        # Add the optimizer
-        learning_rate = tf.train.exponential_decay(self.lr_placeholder, global_step,
-                                                   1000, 0.95, staircase=False)
-        opt = tf.train.AdamOptimizer(learning_rate)
+        #learning_rate = tf.train.exponential_decay(self.lr_placeholder, global_step,
+        #                                        1000, 0.95, staircase=False)
+        #opt = tf.train.AdamOptimizer(learning_rate)
         train_op = opt.minimize(total_loss, global_step=global_step)
         return train_op, train_ema_op
 
