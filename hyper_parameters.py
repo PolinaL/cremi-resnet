@@ -2,9 +2,9 @@ import tensorflow as tf
 
 FLAGS = tf.app.flags.FLAGS
 
-## The following flags are related to save paths, tensorboard outputs and screen outputs
+## The following flags are related to save paths, tensorboard out6puts and screen outputs
 
-tf.app.flags.DEFINE_string('version', 'cremi_momentum_optm', '''A version number defining the directory to save
+tf.app.flags.DEFINE_string('version', 'cremi_adam_exp_decay_valA', '''A version number defining the directory to save
 logs and checkpoints''')
 tf.app.flags.DEFINE_integer('report_freq', 391, '''Steps takes to output errors on the screen
 and write summaries''')
@@ -14,13 +14,13 @@ moving average shown on tensorboard''')
 
 ## The following flags define hyper-parameters regards training
 
-tf.app.flags.DEFINE_integer('train_steps', 80000, '''Total steps that you want to train''')
+tf.app.flags.DEFINE_integer('train_steps', 25000, '''Total steps that you want to train''')
 tf.app.flags.DEFINE_boolean('is_full_validation', True, '''Validation w/ full validation set or
 a random batch''')
 tf.app.flags.DEFINE_integer('train_batch_size', 80, '''Train batch size''')
 tf.app.flags.DEFINE_integer('validation_batch_size', 80, '''Validation batch size, better to be
 a divisor of 10000 for this task''')
-tf.app.flags.DEFINE_integer('test_batch_size', 125, '''Test batch size''')
+tf.app.flags.DEFINE_integer('test_batch_size', 80, '''Test batch size''')
 
 tf.app.flags.DEFINE_float('init_lr', 0.00001, '''Initial learning rate''')
 tf.app.flags.DEFINE_float('lr_decay_factor', 0.1, '''How much to decay the learning rate each
@@ -43,12 +43,12 @@ each side of the image''')
 
 ## If you want to load a checkpoint and continue training
 
-tf.app.flags.DEFINE_string('ckpt_path', 'cache/logs_repeat20/model.ckpt-100000', '''Checkpoint
+tf.app.flags.DEFINE_string('ckpt_path', 'logs_cremi_adam_exp_decay_600000_steps/model.ckpt-350000', '''Checkpoint
 directory to restore''')
 tf.app.flags.DEFINE_boolean('is_use_ckpt', False, '''Whether to load a checkpoint and continue
 training''')
 
-tf.app.flags.DEFINE_string('test_ckpt_path', 'model_110.ckpt-1', '''Checkpoint
+tf.app.flags.DEFINE_string('test_ckpt_path', 'logs_cremi_adam_exp_decay_600000_steps/model.ckpt-350000', '''Checkpoint
 directory to restore''')
 
 

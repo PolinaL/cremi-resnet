@@ -3,6 +3,7 @@ from datetime import datetime
 import time
 from cremi_input import *
 import pandas as pd
+from sklearn.metrics import confusion_matrix
 
 
 class Train(object):
@@ -40,14 +41,14 @@ class Train(object):
             global_step = tf.Variable(0, trainable=False)
             validation_step = tf.Variable(0, trainable=False)
 
-            # Logits of training data and valiation data come from the same graph. The inference of
-            # validation data share all the weights with train data. This is implemented by passing
+            # Logits of training data and validation data come from the same graph. The inference of
+            # validation data shares all the weights with train data. This is implemented by passing
             # reuse=True to the variable scopes of train graph
             logits = inference(self.image_placeholder, FLAGS.num_residual_blocks, reuse=False)
             vali_logits = inference(self.vali_image_placeholder, FLAGS.num_residual_blocks, reuse=True)
 
             # The following calculates the train loss, which consists of
-            # softmax cross entropy and relularization loss
+            # softmax cross entropy and regularization loss
             regu_losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
             loss = self.loss(logits, self.label_placeholder)
             self.full_loss = tf.add_n([loss] + regu_losses)
@@ -182,9 +183,9 @@ class Train(object):
 
 
 
-            if step == FLAGS.decay_step0 or step == FLAGS.decay_step1:
-                FLAGS.init_lr = FLAGS.lr_decay_factor * FLAGS.init_lr
-                print ('Learning rate decayed to ', FLAGS.init_lr)
+            #if step == FLAGS.decay_step0 or step == FLAGS.decay_step1:
+             #   FLAGS.init_lr = FLAGS.lr_decay_factor * FLAGS.init_lr
+              #  print ('Learning rate decayed to ', FLAGS.init_lr)
 
             # Save checkpoints every 10000 steps
             if step % 10000 == 0 or (step + 1) == FLAGS.train_steps:
@@ -196,7 +197,7 @@ class Train(object):
                 df.to_csv(train_dir + FLAGS.version + '_error.csv')
 
 
-    def test(self, test_image_array):
+    def test(self, test_image_array, labels):
         '''
         This function is used to evaluate the test data. Please finish pre-precessing in advance
 
@@ -252,6 +253,12 @@ class Train(object):
 
             prediction_array = np.concatenate((prediction_array, batch_prediction_array))
 
+        # Confusion Matrix
+        predicted_class = np.argmax(prediction_array, 1)
+        
+        #matrix=pd.crosstab(labels, predicted_class, rownames=['True'], colnames=['Predicted'], margins=True)
+        matrix=pd.crosstab(labels, predicted_class, rownames=['True'], colnames=['Predicted']).apply(lambda r: 100.0 * r / r.sum())
+        print(matrix)
         return prediction_array
 
 
@@ -328,9 +335,13 @@ class Train(object):
         :return: two operations. Running train_op will do optimization once. Running train_ema_op
         will generate the moving average of train error and train loss for tensorboard
         '''
+
+        learning_rate = tf.train.exponential_decay(self.lr_placeholder, global_step,
+                                                   1000, 0.95, staircase=False)
         # Add train_loss, current learning rate and train error into the tensorboard summary ops
         with tf.device("/cpu:0"):
-            tf.summary.scalar('learning_rate', self.lr_placeholder)
+            #tf.summary.scalar('learning_rate', self.lr_placeholder)
+            tf.summary.scalar('learning_rate', learning_rate)
             tf.summary.scalar('train_loss', total_loss)
             tf.summary.scalar('train_top1_error', top1_error)
 
@@ -341,11 +352,10 @@ class Train(object):
             tf.summary.scalar('train_top1_error_avg', ema.average(top1_error))
             tf.summary.scalar('train_loss_avg', ema.average(total_loss))
 
-        opt = tf.train.MomentumOptimizer(learning_rate=self.lr_placeholder, momentum=0.9)
+        #opt = tf.train.MomentumOptimizer(learning_rate=self.lr_placeholder, momentum=0.9)
 
-        #learning_rate = tf.train.exponential_decay(self.lr_placeholder, global_step,
-        #                                        1000, 0.95, staircase=False)
-        #opt = tf.train.AdamOptimizer(learning_rate)
+
+        opt = tf.train.AdamOptimizer(learning_rate)
         train_op = opt.minimize(total_loss, global_step=global_step)
         return train_op, train_ema_op
 
@@ -420,6 +430,11 @@ class Train(object):
 train = Train()
 # Start the training session
 train.train()
+
+
+#vali_data, vali_masks, vali_labels=load_val_data()
+#validation_array = whitening_image(vali_data, vali_masks)
+#pred_array = train.test(validation_array, vali_labels)
 
 
 

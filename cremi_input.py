@@ -4,7 +4,6 @@ import sys
 import numpy as np
 import pickle
 import os
-import cv2
 import h5py as h5
 
 IMG_WIDTH = 128
@@ -12,20 +11,20 @@ IMG_HEIGHT = 128
 IMG_DEPTH = 2
 NUM_CLASS = 3
 
-EPOCH_SIZE = 46160
+EPOCH_SIZE = 5908
 
 def load(paths=None):
     """Load and reshape data from file."""
 
     if paths is None:
         # change paths here
-        paths = {'A': 'C:\code\cremi\deep_res_net\data\\test_like_training_all_A_good_masks_augmented.h5',
-                 'B': 'C:\code\cremi\deep_res_net\data\\test_like_training_all_B_good_masks_augmented.h5',
-                 'C': 'C:\code\cremi\deep_res_net\data\\test_like_training_all_C_good_masks_augmented.h5'}
+        paths = {'A': '/home/newuser/code/cremi-resnet/data/test_like_training_all_augmentedA.h5'}
+                 #'B': '/home/newuser/code/cremi-resnet/data/test_like_training_all_B_good_masks_augmented.h5',
+                 #'C': '/home/newuser/code/cremi-resnet/data/test_like_training_all_C_good_masks_augmented.h5'}
 
-        #paths = {'A': '/net/hciserver03/storage/plitvak/resnet/resnet-in-tensorflow/data/test_like_training_all_A_good_masks_augmented.h5',
-        #       'B': '/net/hciserver03/storage/plitvak/resnet/resnet-in-tensorflow/data/test_like_training_all_B_good_masks_augmented.h5',
-        #        'C': '/net/hciserver03/storage/plitvak/resnet/resnet-in-tensorflow/data/test_like_training_all_C_good_masks_augmented.h5'}
+       #paths = {'A': '/net/hciserver03/storage/plitvak/resnet/resnet-in-tensorflow/data/test_like_training_all_A_good_masks_augmented.h5',
+        #        'B': '/net/hciserver03/storage/plitvak/resnet/resnet-in-tensorflow/data/test_like_training_all_B_good_masks_augmented.h5',
+         #       'C': '/net/hciserver03/storage/plitvak/resnet/resnet-in-tensorflow/data/test_like_training_all_C_good_masks_augmented.h5'}
 
        # paths = {'A': 'C:\code\cremi\deep_res_net\data\\test_like_training_all_A_good_masks_augmented.h5'}
 
@@ -63,6 +62,43 @@ def load(paths=None):
     datadict = {key: np.concatenate(tuple(arr), axis=0) for key, arr in datadict.items()}
 
     return datadict
+
+def load_val_data(paths=None):
+    """Load and reshape data from file."""
+
+    if paths is None:
+        # change paths here
+        #paths = {'A': '/home/newuser/code/cremi-resnet/data/test_like_training_all_A_good_masks_augmented.h5'}
+                #'B': '/home/newuser/code/cremi-resnet/data/test_like_training_all_B_good_masks_augmented.h5'}
+                #'C': '/home/newuser/code/cremi-resnet/data/test_like_training_all_C_good_masks_augmented.h5'}
+
+       paths = {'A': '/net/hciserver03/storage/plitvak/resnet/resnet-in-tensorflow/data/test_like_training_all_A_good_masks_augmented.h5',
+                'B': '/net/hciserver03/storage/plitvak/resnet/resnet-in-tensorflow/data/test_like_training_all_B_good_masks_augmented.h5',
+                'C': '/net/hciserver03/storage/plitvak/resnet/resnet-in-tensorflow/data/test_like_training_all_C_good_masks_augmented.h5'}
+
+
+
+    # Init a dict to contain arrays for all datasets
+    datadict = {'vaX': [],
+                'vaXm': [],
+                'vaY': []}
+
+    # Loop over datasets and load from H5
+    for dset in paths.keys():
+        # Train
+        h5file = h5.File(paths[dset], "r")
+
+        # Validate
+        A = np.moveaxis(h5file['images_0_50'], 2, 0)
+        datadict['vaX'].append(A)
+        M = np.moveaxis(h5file['masks_0_50'], 2, 0)
+        datadict['vaXm'].append(M)
+        Y = np.moveaxis(np.asarray(h5file['labels_0_50']).reshape(-1), 0, 0)
+        datadict['vaY'].append(Y)
+
+    datadict = {key: np.concatenate(tuple(arr), axis=0) for key, arr in datadict.items()}
+
+    return datadict['vaX'], datadict['vaXm'], datadict['vaY']
 
 
 def whitening_image(X, Xm, shuffle=False):
